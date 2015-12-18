@@ -45,7 +45,6 @@ float k22 = 100;
 float k33 = 0;
 float dotprod;
 float thresh = .0006;
-float Omega;
 String telemetry = "";
 
 void setup() {
@@ -93,7 +92,6 @@ void loop() {
   
   //Convert gyro measurements to string,
   //send them back to the Earthlings.
-  Omega = abs(w.x) + abs(w.y);
   telemetry = String(w.x)+","+String(w.y)+","+String(w.z)+"\n";
   digitalWrite(LED, HIGH);
   m_radio.transmit("hello earthlings\n", 17);
