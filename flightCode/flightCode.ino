@@ -1,6 +1,8 @@
 #include <SpriteMag.h>
 #include <SpriteGyro.h>
 #include <SpriteRadio.h>
+#include <stdint.h>
+
 
 unsigned char prn2[64] = {
   0b00000001, 0b01011110, 0b11010100, 0b01100001, 0b00001011, 0b11110011, 0b00110001, 0b01011100,
@@ -24,6 +26,20 @@ unsigned char prn3[64] = {
   0b11001011, 0b00101110, 0b01100011, 0b10111111, 0b01010100, 0b11000100, 0b11010100, 0b01010100
 };
 
+struct {
+  char axisone;
+  float x;
+  char axistwo;
+  float y;
+  char axisthree;
+  float z;
+} typedef Data;
+
+union {
+  Data d;
+  char str[15];
+} typedef Measurement;
+
 SpriteMag mag = SpriteMag();
 SpriteGyro gyro = SpriteGyro();
 SpriteRadio m_radio = SpriteRadio(prn2, prn3);
@@ -45,7 +61,8 @@ float k22 = 100;
 float k33 = 0;
 float dotprod;
 float thresh = .0006;
-String telemetry = "";
+Data omega;
+Measurement meas;
 
 void setup() {
   gyro.init();
@@ -92,9 +109,15 @@ void loop() {
   
   //Convert gyro measurements to string,
   //send them back to the Earthlings.
-  telemetry = String(w.x)+","+String(w.y)+","+String(w.z)+"\n";
+  omega.axisone = 'x';
+  omega.x = w.x;
+  omega.axistwo = 'y';
+  omega.y = w.y;
+  omega.axisthree = 'z';
+  omega.z = w.z;
+  meas.d = omega;
   digitalWrite(LED, HIGH);
-  m_radio.transmit("hello earthlings\n", 17);
+  m_radio.transmit(meas.str, 15);
   digitalWrite(LED, LOW);
   
   //Gain the angular velocity
