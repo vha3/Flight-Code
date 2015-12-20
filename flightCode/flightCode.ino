@@ -28,16 +28,16 @@ unsigned char prn3[64] = {
 
 struct {
   char axisone;
-  float x;
+  unsigned char x;
   char axistwo;
-  float y;
+  unsigned char y;
   char axisthree;
-  float z;
+  unsigned char z;
 } typedef Data;
 
 union {
   Data d;
-  char str[15];
+  char str[6];
 } typedef Measurement;
 
 SpriteMag mag = SpriteMag();
@@ -84,15 +84,6 @@ void loop() {
   b.y = .0001*b.y;
   b.z = .0001*b.z;
   
-  //Print those out to make sure they
-  //look ok.
-  Serial.print("Bx: ");
-  Serial.print(b.x);
-  Serial.print("    By:");
-  Serial.print(b.y);
-  Serial.print("    Bz: ");
-  Serial.println(b.z);
-  
   //Cross mag measurements
   //with coil direction
   vx = -1*b.y;
@@ -104,35 +95,44 @@ void loop() {
   vhaty = vy/(sqrt(vx*vx + vy*vy));
   vhatz = 0;
   
-  //Get angular velocity measurements
+  //Get angular velocity measurements (rad/sec)
   AngularVelocity w = gyro.read();
-  
+  w.x = (float) (w.x/(14.375))*(PI/180);
+  w.y = (float) (w.y/(14.375))*(PI/180);
+  w.z = (float) (w.z/(14.375))*(PI/180);
+
+    
   //Convert gyro measurements to string,
   //send them back to the Earthlings.
   omega.axisone = 'x';
-  omega.x = w.x;
+  omega.x = map(w.x, -40, 40, 0, 255);
+  omega.x = (unsigned char) omega.x;
   omega.axistwo = 'y';
-  omega.y = w.y;
+  omega.y = map(w.y, -40, 40, 0, 255);
+  omega.y = (unsigned char) omega.y;
   omega.axisthree = 'z';
-  omega.z = w.z;
+  omega.z = map(w.z, -40, 40, 0, 255);
+  omega.z = (unsigned char) omega.z;
   meas.d = omega;
   digitalWrite(LED, HIGH);
-  m_radio.transmit(meas.str, 15);
+//  m_radio.transmit(meas.str, 6);
   digitalWrite(LED, LOW);
+  
+  
+      //Print those out to make sure they
+  //look ok.
+  Serial.print("Wx: ");
+  Serial.print((unsigned int) omega.x);
+  Serial.print("    Wy:");
+  Serial.print((unsigned int) omega.y);
+  Serial.print("    Wz: ");
+  Serial.println((unsigned int) omega.z);
+  
   
   //Gain the angular velocity
   w.x = k11*w.x;
   w.y = k22*w.y;
   w.z = k33*w.z;
-  
-  //Print those out to make sure they
-  //look ok.
-  Serial.print("Wx: ");
-  Serial.print(w.x);
-  Serial.print("    Wy:");
-  Serial.print(w.y);
-  Serial.print("    Wz: ");
-  Serial.println(w.z);
   
   //Dot gained angular velocity with vhat
   dotprod = w.x*vhatx + w.y*vhaty + w.z*vhatz;
@@ -155,8 +155,8 @@ void loop() {
   }
   
   //Print
-  Serial.println("");
+//  Serial.println("");
   
   //Short delay
-  delay(250);
+  delay(100);
 }
